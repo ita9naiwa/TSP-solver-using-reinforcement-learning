@@ -124,8 +124,7 @@ tsp_20_model = CombinatorialRL(
         20,
         n_glimpses,
         tanh_exploration,
-        use_tanh,
-        attention="Bahdanau").cuda()
+        use_tanh).cuda()
 
 tsp_20_train = TrainModel(tsp_20_model,
                         train_20_dataset,

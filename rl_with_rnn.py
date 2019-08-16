@@ -11,14 +11,13 @@ from torch.utils.data import Dataset, DataLoader
 from torch.distributions import Categorical
 
 class Attention(nn.Module):
-    def __init__(self, hidden_size, use_tanh=False, C=10, name='Bahdanau'):
+    def __init__(self, hidden_size, C=10, name='Bahdanau'):
         super(Attention, self).__init__()
 
-        self.use_tanh = use_tanh
         self.C = C
         self.name = name
         self.W_query = nn.Linear(hidden_size, hidden_size, bias=False)
-        self.W_ref   = nn.Linear(hidden_size, hidden_size, bias=False)
+        self.W_ref = nn.Linear(hidden_size, hidden_size, bias=False)
         self.V = nn.Linear(hidden_size, 1, bias=False)
 
     def forward(self, query, ref):
@@ -42,9 +41,7 @@ class PointerNet(nn.Module):
             hidden_size,
             seq_len,
             n_glimpses,
-            tanh_exploration,
-            use_tanh,
-            attention):
+            tanh_exploration):
         super(PointerNet, self).__init__()
 
         self.embedding_size = embedding_size
@@ -56,8 +53,8 @@ class PointerNet(nn.Module):
         self.embedding = GraphEmbedding(2, embedding_size)
         self.encoder = nn.LSTM(embedding_size, hidden_size, batch_first=True)
         self.decoder = nn.LSTM(embedding_size, hidden_size, batch_first=True)
-        self.pointer = Attention(hidden_size, use_tanh=use_tanh, C=tanh_exploration, name=attention)
-        self.glimpse = Attention(hidden_size, use_tanh=False, name=attention)
+        self.pointer = Attention(hidden_size, C=tanh_exploration)
+        self.glimpse = Attention(hidden_size)
 
         self.decoder_start_input = nn.Parameter(torch.FloatTensor(embedding_size))
         self.decoder_start_input.data.uniform_(-(1. / math.sqrt(embedding_size)), 1. / math.sqrt(embedding_size))
@@ -85,7 +82,10 @@ class PointerNet(nn.Module):
 
         prev_probs = []
         prev_idxs = []
-        mask = torch.zeros(batch_size, seq_len, dtype=torch.bool)
+        try:
+            mask = torch.zeros(batch_size, seq_len, dtype=torch.bool)
+        except:
+            mask = torch.zeros(batch_size, seq_len, dtype=torch.uint8)
         idxs = None
         decoder_input = self.decoder_start_input.unsqueeze(0).repeat(batch_size, 1)
 
@@ -113,25 +113,22 @@ class PointerNet(nn.Module):
         return torch.stack( prev_probs, 1), torch.stack(prev_idxs, 1)
 
 
-class CombinatorialRL(nn.Module):
+class solver_RNN(nn.Module):
     def __init__(self,
             embedding_size,
             hidden_size,
             seq_len,
             n_glimpses,
-            tanh_exploration,
-            use_tanh,
-            attention):
-        super(CombinatorialRL, self).__init__()
+            tanh_exploration):
+        super(solver_RNN, self).__init__()
 
         self.actor = PointerNet(
                 embedding_size,
                 hidden_size,
                 seq_len,
                 n_glimpses,
-                tanh_exploration,
-                use_tanh,
-                attention)
+                tanh_exploration)
+
     def reward(self, sample_solution):
         """
         Args:
@@ -139,8 +136,12 @@ class CombinatorialRL(nn.Module):
             torch.LongTensor [batch_size x seq_len x 2]
         """
         #여기 다시 한 번 확인
+
         batch_size, seq_len, _ = sample_solution.size()
-        tour_len = Variable(torch.zeros([batch_size])).cuda()
+
+        tour_len = Variable(torch.zeros([batch_size]))
+        if isinstance(sample_solution, torch.cuda.FloatTensor):
+            tour_len = tour_len.cuda()
         for i in range(seq_len - 1):
             tour_len += torch.norm(sample_solution[:, i, :] - sample_solution[:, i + 1, :], dim=-1)
 
