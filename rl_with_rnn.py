@@ -7,12 +7,15 @@ import torch.optim as optim
 import torch.autograd as autograd
 import torch.nn.functional as F
 from torch.autograd import Variable
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.
+
+data import Dataset, DataLoader
 from torch.distributions import Categorical
 
 class Attention(nn.Module):
     def __init__(self, hidden_size, C=10, name='Bahdanau'):
-        super(Attention, self).__init__()
+
+        
 
         self.C = C
         self.name = name

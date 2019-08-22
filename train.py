@@ -25,7 +25,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("--model_type", type=str, default="rnn")
 parser.add_argument("--seq_len", type=int, default=20)
-parser.add_argument("--num_epochs", type=int, default=10)
+parser.add_argument("--num_epochs", type=int, default=100)
 parser.add_argument("--num_tr_dataset", type=int, default=10000)
 parser.add_argument("--num_te_dataset", type=int, default=500)
 parser.add_argument("--embedding_size", type=int, default=128)
