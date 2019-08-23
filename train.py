@@ -1,26 +1,22 @@
-import math
-import numpy as np
-
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.autograd as autograd
-import torch.nn.functional as F
-from torch.autograd import Variable
-from torch.utils.data import Dataset, DataLoader
-from torch.distributions import Categorical
-
-
-from IPython.display import clear_output
-from tqdm import tqdm
-import matplotlib.pyplot as plt
-
-from tsp_heuristic import get_ref_reward
-from rl_with_rnn import solver_RNN
-from rl_with_attention import solver_Attention
-from tsp import *
-
 import argparse
+import math
+
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+import torch.autograd as autograd
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+from IPython.display import clear_output
+from torch.autograd import Variable
+from torch.distributions import Categorical
+from torch.utils.data import DataLoader, Dataset
+from tqdm import tqdm
+
+from solver import solver_Attention, solver_RNN
+from tsp import *
+from tsp_heuristic import get_ref_reward
 
 parser = argparse.ArgumentParser()
 

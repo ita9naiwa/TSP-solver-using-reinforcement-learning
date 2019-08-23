@@ -1,5 +1,6 @@
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
+
 
 class TSPDataset(Dataset):
 
@@ -30,7 +31,7 @@ def reward(self, sample_solution):
 
     batch_size, seq_len, _ = sample_solution.size()
 
-    tour_len = Variable(torch.zeros([batch_size]))
+    tour_len = torch.zeros([batch_size])
     for i in range(seq_len - 1):
         tour_len += torch.norm(sample_solution[:, i, :] - sample_solution[:, i + 1, :], dim=-1)
 

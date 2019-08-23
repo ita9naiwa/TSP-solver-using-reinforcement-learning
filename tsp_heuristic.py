@@ -1,6 +1,6 @@
-import torch
 import elkai
 import numpy as np
+import torch
 
 CONST = 100000.0
 def calc_dist(p, q):
