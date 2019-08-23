@@ -63,12 +63,14 @@ if __name__ =="__main__":
     for i, pointset in tqdm(test_dataset):
         heuristic_distance[i] = get_ref_reward(pointset)
     if args.model_type == "rnn":
+        print("RNN model is used")
         model = solver_RNN(
             args.embedding_size,
             args.hidden_size,
             args.seq_len,
             2, 10)
     elif args.model_type.startswith("att"):
+        print("Attention model is used")
         model = solver_Attention(
             args.embedding_size,
             args.hidden_size,
@@ -107,16 +109,16 @@ if __name__ =="__main__":
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
             optimizer.step()
-            if batch_idx % 100 == 0:
-                model.eval()
-                ret = []
-                for i, batch in eval_loader:
-                    if args.use_cuda:
-                        batch = pointset.cuda()
-                    R, _, _ = model(batch)
-                print("[at epoch %d, %d'th batch]RL model generates %0.2f time worse solution than heuristics" %(
-                        epoch,
-                        batch_idx,
-                        (R / heuristic_distance).mean().detach().numpy()))
 
-                model.train()
+
+        model.eval()
+        ret = []
+        for i, batch in eval_loader:
+            if args.use_cuda:
+                batch = pointset.cuda()
+            R, _, _ = model(batch)
+        print("[at epoch %d]RL model generates %0.2f time worse solution than heuristics" %(
+                epoch,
+                (R / heuristic_distance).mean().detach().numpy()))
+
+        model.train()

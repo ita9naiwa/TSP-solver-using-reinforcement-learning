@@ -12,9 +12,7 @@ from torch.distributions import Categorical
 
 class Attention(nn.Module):
     def __init__(self, hidden_size, C=10, name='Bahdanau'):
-
-
-
+        super(Attention, self).__init__()
         self.C = C
         self.name = name
         self.W_query = nn.Linear(hidden_size, hidden_size, bias=False)
@@ -111,7 +109,7 @@ class PointerNet(nn.Module):
             prev_probs.append(log_probs)
             prev_idxs.append(idxs)
 
-        return torch.stack(prev_probs, 1), torch.stack(prev_idxs, 1)
+        return torch.stack( prev_probs, 1), torch.stack(prev_idxs, 1)
 
 
 class solver_RNN(nn.Module):
