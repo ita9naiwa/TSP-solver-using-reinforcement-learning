@@ -7,15 +7,13 @@ import torch.optim as optim
 import torch.autograd as autograd
 import torch.nn.functional as F
 from torch.autograd import Variable
-from torch.utils.
-
-data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader
 from torch.distributions import Categorical
 
 class Attention(nn.Module):
     def __init__(self, hidden_size, C=10, name='Bahdanau'):
 
-        
+
 
         self.C = C
         self.name = name
@@ -113,7 +111,7 @@ class PointerNet(nn.Module):
             prev_probs.append(log_probs)
             prev_idxs.append(idxs)
 
-        return torch.stack( prev_probs, 1), torch.stack(prev_idxs, 1)
+        return torch.stack(prev_probs, 1), torch.stack(prev_idxs, 1)
 
 
 class solver_RNN(nn.Module):

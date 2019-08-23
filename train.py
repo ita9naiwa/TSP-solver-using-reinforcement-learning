@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 
 from tsp_heuristic import get_ref_reward
 from rl_with_rnn import solver_RNN
+from rl_with_attention import solver_Attention
 from tsp import *
 
 import argparse
@@ -63,6 +64,12 @@ if __name__ =="__main__":
         heuristic_distance[i] = get_ref_reward(pointset)
     if args.model_type == "rnn":
         model = solver_RNN(
+            args.embedding_size,
+            args.hidden_size,
+            args.seq_len,
+            2, 10)
+    elif args.model_type.startswith("att"):
+        model = solver_Attention(
             args.embedding_size,
             args.hidden_size,
             args.seq_len,
