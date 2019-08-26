@@ -11,7 +11,7 @@ from torch.distributions import Categorical
 from torch.utils.data import DataLoader, Dataset
 
 from rl_with_attention import AttentionTSP
-from rl_with_rnn import PointerNet
+from rl_with_rnn import RNNTSP
 
 
 class Solver(nn.Module):
@@ -58,7 +58,7 @@ class solver_RNN(Solver):
             tanh_exploration):
         super(solver_RNN, self).__init__()
 
-        self.actor = PointerNet(embedding_size,
+        self.actor = RNNTSP(embedding_size,
                                 hidden_size,
                                 seq_len,
                                 n_glimpses,

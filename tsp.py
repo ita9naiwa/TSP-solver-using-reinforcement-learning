@@ -22,23 +22,6 @@ class TSPDataset(Dataset):
         return idx, self.data_set[idx]
 
 
-def reward(self, sample_solution):
-    """
-    Args:
-        sample_solution seq_len of [batch_size]
-        torch.LongTensor [batch_size x seq_len x 2]
-    """
-
-    batch_size, seq_len, _ = sample_solution.size()
-
-    tour_len = torch.zeros([batch_size])
-    for i in range(seq_len - 1):
-        tour_len += torch.norm(sample_solution[:, i, :] - sample_solution[:, i + 1, :], dim=-1)
-
-    tour_len += torch.norm(sample_solution[:, seq_len - 1, :] - sample_solution[:, 0, :], dim=-1)
-
-    return tour_len
-
 def test():
     train_loader = DataLoader(TSPDataset(10, 100), batch_size=32, shuffle=True, num_workers=1)
     for  (a, b) in train_loader:

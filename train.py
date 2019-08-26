@@ -1,30 +1,25 @@
 import argparse
-import math
 
-import matplotlib.pyplot as plt
-import numpy as np
 import torch
 import torch.autograd as autograd
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from IPython.display import clear_output
-from torch.autograd import Variable
-from torch.distributions import Categorical
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
 from solver import solver_Attention, solver_RNN
-from tsp import *
+from tsp import TSPDataset
 from tsp_heuristic import get_ref_reward
 
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--model_type", type=str, default="rnn")
-parser.add_argument("--seq_len", type=int, default=20)
+parser.add_argument("--seq_len", type=int, default=30)
 parser.add_argument("--num_epochs", type=int, default=100)
 parser.add_argument("--num_tr_dataset", type=int, default=10000)
-parser.add_argument("--num_te_dataset", type=int, default=500)
+parser.add_argument("--num_te_dataset", type=int, default=2000)
 parser.add_argument("--embedding_size", type=int, default=128)
 parser.add_argument("--hidden_size", type=int, default=128)
 parser.add_argument("--batch_size", type=int, default=64)
@@ -111,10 +106,10 @@ if __name__ =="__main__":
         ret = []
         for i, batch in eval_loader:
             if args.use_cuda:
-                batch = pointset.cuda()
+                batch = batch.cuda()
             R, _, _ = model(batch)
         print("[at epoch %d]RL model generates %0.2f time worse solution than heuristics" %(
-                epoch,
-                (R / heuristic_distance).mean().detach().numpy()))
-
+            epoch,
+            (R / heuristic_distance).mean().detach().numpy()))
+        print("AVG R", R.mean().detach().numpy())
         model.train()

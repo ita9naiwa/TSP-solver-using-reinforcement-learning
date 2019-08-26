@@ -9,14 +9,14 @@ from torch.distributions import Categorical
 from modules import Attention, GraphEmbedding
 
 
-class PointerNet(nn.Module):
+class RNNTSP(nn.Module):
     def __init__(self,
             embedding_size,
             hidden_size,
             seq_len,
             n_glimpses,
             tanh_exploration):
-        super(PointerNet, self).__init__()
+        super(RNNTSP, self).__init__()
 
         self.embedding_size = embedding_size
         self.hidden_size = hidden_size
@@ -53,29 +53,31 @@ class PointerNet(nn.Module):
 
         prev_chosen_logprobs = []
         preb_chosen_indices = []
-        mask = torch.zeros(batch_size, seq_len, dtype=torch.bool)
+        mask = torch.zeros(batch_size, self.seq_len, dtype=torch.bool)
 
-        idxs = None
+
         decoder_input = self.decoder_start_input.unsqueeze(0).repeat(batch_size, 1)
-
-        for i in range(seq_len):
+        for index in range(seq_len):
             _, (hidden, context) = self.decoder(decoder_input.unsqueeze(1), (hidden, context))
 
             query = hidden.squeeze(0)
-            for j in range(self.n_glimpses):
+            for _ in range(self.n_glimpses):
                 ref, logits = self.glimpse(query, encoder_outputs)
-                logits, mask = self.apply_mask_to_logits(logits, mask, idxs)
-                query = torch.matmul(ref.transpose(-1, -2), F.softmax(logits, dim=-1).unsqueeze(-1)).squeeze(-1)
+                _mask = mask.clone()
+                logits[_mask] = -100000.0
+                query = torch.matmul(ref.transpose(-1, -2), torch.softmax(logits, dim=-1).unsqueeze(-1)).squeeze(-1)
 
             _, logits = self.pointer(query, encoder_outputs)
-            logits, mask = self.apply_mask_to_logits(logits, mask, idxs)
-            probs = F.softmax(logits, dim=-1)
+
+            _mask = mask.clone()
+            logits[_mask] = -100000.0
+            probs = torch.softmax(logits, dim=-1)
             cat = Categorical(probs)
-
-            idxs = cat.sample()
-            log_probs = cat.log_prob(idxs)
-            decoder_input = embedded.gather(1, idxs[:, None, None].repeat(1, 1, self.hidden_size)).squeeze(1)
+            chosen = cat.sample()
+            mask[[i for i in range(batch_size)], chosen] = True
+            log_probs = cat.log_prob(chosen)
+            decoder_input = embedded.gather(1, chosen[:, None, None].repeat(1, 1, self.hidden_size)).squeeze(1)
             prev_chosen_logprobs.append(log_probs)
-            preb_chosen_indices.append(idxs)
+            preb_chosen_indices.append(chosen)
 
-        return torch.stack( prev_chosen_logprobs, 1), torch.stack(preb_chosen_indices, 1)
+        return torch.stack(prev_chosen_logprobs, 1), torch.stack(preb_chosen_indices, 1)

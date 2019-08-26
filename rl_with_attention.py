@@ -20,7 +20,7 @@ class att_layer(nn.Module):
         self.embed = nn.Sequential(nn.Linear(embed_dim, feed_forward_hidden), nn.ReLU(), nn.Linear(feed_forward_hidden, embed_dim))
 
     def forward(self, x):
-        #I don't know why, but multiheadattention in pytorch starts with (target_seq_length, batch_size, embedding_size).
+        # Multiheadattention in pytorch starts with (target_seq_length, batch_size, embedding_size).
         # thus we permute order first. https://pytorch.org/docs/stable/nn.html#multiheadattention
         x = x.permute(1, 0, 2)
         _1 = x + self.mha(x, x, x)[0]
@@ -28,11 +28,13 @@ class att_layer(nn.Module):
         _2 = _1 + self.embed(_1)
         return _2
 
+
 class AttentionModule(nn.Sequential):
     def __init__(self, embed_dim, n_heads, feed_forward_hidden=512, n_self_attentions=2, bn=False):
         super(AttentionModule, self).__init__(
             *(att_layer(embed_dim, n_heads, feed_forward_hidden, bn) for _ in range(n_self_attentions))
         )
+
 
 class AttentionTSP(nn.Module):
     def __init__(self,
@@ -40,22 +42,22 @@ class AttentionTSP(nn.Module):
                  hidden_size,
                  seq_len,
                  n_head=4,
-                 tanh_exploration=10):
+                 C=10):
         super(AttentionTSP, self).__init__()
 
         self.embedding_size = embedding_size
         self.hidden_size = hidden_size
         self.seq_len = seq_len
         self.n_head = n_head
-        self.tanh_exploration = self.C = tanh_exploration
+        self.C = C
 
         self.embedding = GraphEmbedding(2, embedding_size)
         self.mha = AttentionModule(embedding_size, n_head)
 
-        self.init_W = nn.Parameter(torch.Tensor(2 * self.embedding_size))
-        self.init_W.data.uniform_(-1, 1)
+        self.init_w = nn.Parameter(torch.Tensor(2 * self.embedding_size))
+        self.init_w.data.uniform_(-1, 1)
         self.glimpse = Glimpse(self.embedding_size, self.hidden_size, self.n_head)
-        self.pointer = Pointer(self.embedding_size, self.hidden_size, 1, self.tanh_exploration)
+        self.pointer = Pointer(self.embedding_size, self.hidden_size, 1, self.C)
 
         self.h_context_embed = nn.Linear(self.embedding_size, self.embedding_size)
         self.v_weight_embed = nn.Linear(self.embedding_size * 2, self.embedding_size)
@@ -72,7 +74,7 @@ class AttentionTSP(nn.Module):
         h = self.mha(embedded)
         h_mean = h.mean(dim=1)
         h_bar = self.h_context_embed(h_mean)
-        h_rest = self.v_weight_embed(self.init_W)
+        h_rest = self.v_weight_embed(self.init_w)
         query = h_bar + h_rest
 
         #init query
